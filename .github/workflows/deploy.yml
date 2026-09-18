@@ -1,0 +1,37 @@
+name: Nginx Python OpenShift CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v4
+
+      - name: Check OpenShift
+        run: |
+          oc project my-project
+          oc whoami
+
+      - name: Build Python Backend
+        run: |
+          oc start-build python --from-dir=backend --follow
+
+      - name: Build Nginx Frontend
+        run: |
+          oc start-build nginx --from-dir=frontend --follow
+
+      - name: Restart Applications
+        run: |
+          oc rollout restart deployment/python
+          oc rollout restart deployment/nginx
+
+      - name: Check Deployment
+        run: |
+          oc rollout status deployment/python
+          oc rollout status deployment/nginx
